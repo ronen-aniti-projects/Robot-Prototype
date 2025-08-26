@@ -1,0 +1,20 @@
+{
+    "right_encoder_pin": 37,
+    "left_encoder_pin": 35,
+    "sonar_trig": 13,
+    "sonar_echo": 11,
+    "right_motor_logic_1": 22,
+    "right_motor_logic_2": 24,
+    "right_motor_pwm": 12,
+    "left_motor_pwm": 32,
+    "left_motor_logic_1": 38,
+    "left_motor_logic_2": 40,
+    "gripper_pwm": 33,
+    "gripper_duty_close": 3.5,
+    "gripper_duty_open": 11.5, 
+    "safety_distance_cm": 40,
+    "angle_to_pixel_ratio": 0.061,
+    "wheel_diameter_m": 0.063,
+    "ticks_per_rev": 20
+}
+
