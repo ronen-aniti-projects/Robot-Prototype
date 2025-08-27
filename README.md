@@ -1,10 +1,11 @@
 # Raspberry Pi Pick-and-Place Autonomous Robot Build
 
 ## Objective 
-The objective of this project is to familiarize myself with the process of building an autonomous robot from component parts and component software modules. I am aiming for the robot to ultimately be capable of transporting 3-D printed blocks between locations over the unfinished concrete planar inclined surface of a residential swimming pool. 
+
+My aim is to design and build, from component parts and software modules, a robot capable of autonomous transport--over the unfinished concrete planer inclined surface of a residential swimming pool--of 3D-printed blocks from scattered locations to a designated 2 ft. by 2 ft. drop-off zone, all without colliding with the walls of the swimming pool or undelivered blocks. My motivation for this project is (i) in familiarizing myself with the process of integrating sensors, actuators, and computing boards, (ii) putting into practice some robotics concepts, including navigation, localization, object detection, and drive control, and (iii) establishing a "platform project" that can serve as a physical testing ground as I advance with my University of Maryland (College Park) M.Eng. Robotics Engineering studies, much of which is simulation-based only. 
 
 ## Mechanical Sub-System
-The robot's body comprises a commercial-off-the-shelf chassis (DFRobot 4WD Baron Mobile Robot Platform), four commercial-off-the-shelf silicone tread orange and clear motor wheels (Adafruit), a commercial-off-the-shelf servo-gripper assembly (ServoCity Servo-Driven Parallel Gripper Kit), a shelf-based mounting assembly I designed and manufactured, and a perception mounting part I designed and manufactured--these latter two I designed in Dassault Systèmes computer aided design (CAD) program 2024 Solidworks, I prepared for 3-D printing in computer aided manufacturing (CAM) program Prusa Slicer, and I manufactured on Prusa MK3 and Prusa MK4 fusion deposition modeling (FDM) 3-D printers at University of Maryland's Rapid Prototyping Center. I fastened all of the mechanical components with 2 mm and 3 mm machine screws and associated nut, washer, and standoff fastener hardware. 
+The robot's body comprises a commercial-off-the-shelf chassis (DFRobot 4WD Baron Mobile Robot Platform), four commercial-off-the-shelf silicone tread orange and clear motor wheels (Adafruit), a commercial-off-the-shelf servo-gripper assembly (ServoCity Servo-Driven Parallel Gripper Kit), a shelf-based mounting assembly I designed and manufactured, and a perception mounting part I designed and manufactured--these latter two I designed in Dassault Systèmes computer aided design (CAD) program 2024 Solidworks, I prepared for 3-D printing in computer aided manufacturing (CAM) program Prusa Slicer, and I manufactured on Prusa MK3 and Prusa MK4 fusion deposition modeling (FDM) 3-D printers at University of Maryland's Rapid Prototyping Center. I fastened all of the mechanical components with 2 mm and 3 mm machine screws and associated nut, washer, and standoff fastener hardware. The primary challenge with implementing a mechanical subsystem for this robot was in striking a balance between leveraging commercial-off-the-shelf components, which are accessible but come only in a single form, and between leveraging custom-made components, which can be highly tailored to the application at the expense of requiring development time to produce.
 
 The following image collages show the results and the process of my mechanical design and integration efforts to date. 
 
@@ -15,10 +16,29 @@ The following image collages show the results and the process of my mechanical d
 
 The mechanical subsystem, the body of the robot, provides a physical structure, provides holding places for each of the robot's sensors, actuators, integrated circuits, and computing boards, and contributes, to the build, through an adjustable shelving system and a front-facing sensor mount that I designed and manufactured progress towards durability, progress towards modularity, and progress towards adaptability. I developed the shelving system so each shelf can be adjusted for height and fastened securely to shelving side panels with M3 machine screws, nuts, and washers. Robot sensors, actuators, and boards are mounted to each shelf with M2 and M3 fastener hardware. Because I 3-D printed each shelf with an infill density of 50%, additional through holes can be drilled without sacrificing structural integrity when component placement needs changing. Additionally, the front-facing mount, holding the Raspberry Pi camera module (Raspberry Pi Camera Module 2) and ultrasonic distance sensor (RCWL-1601), features 2 mm mounting holes for standoff mounts to the camera, a rectangular cutout for the camera's flat-flex ribbon cable, and a rectangular slide-in retention slot for the distance sensor. While the vehicle is in operation, or when the vehicle is shaken from side to side, no component moves from its mounted position. Furthermore, the shelving system doubles as a case that shields the internal components from dust and debris and remains intact when the robot falls over on its side. 
 
-## Vision Sub-System
+## Vision Subsystem
+The primary challenge that the robot's vision subsystem addresses is the challenge of needing to know first, whether a 3D-printed block exists in the robot's field of view and second, the degree of yaw-angle misalignment between the robot and the 3D-printed block.  
+
+
 Explain that the problem that the vision subsystem solves is identifying whether the block of interest exists in the current scene and if so, the degree of mis-alignment between the robot front-facing direction and the object. 
 
 Explain that the vision sub-system is comprised of a Raspberry Pi camera module and software I developed for block detection. The software utilizes HSV masking logic to identify blocks of a certain color. It also utilizes a calibration constant (pixel to angle) to estimate a pivot angle to the center of each object identified in an image. The output of this module is thus used as input to the drive system, which is responsible for driving to the identified block.   
+
+1. Raw Image
+
+2. Region of Interest Crop 
+
+3. Masked Image
+
+4. Contour Detection
+
+5. Largest Contour
+
+6. Bounding Box Draw
+
+7. Pixel Offset from Center
+
+8. Estimate Pivot Angle
 
 **Insert a picture of one processed camera image, showing bounding box drawn around the target block with an arrow pointing to its BB center and a pivot direction and pivot angle on the processed image as text.**
 

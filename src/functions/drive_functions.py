@@ -225,9 +225,15 @@ if __name__ == "__main__":
     try:
         while True:
             
-            #drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
-            #time.sleep(2)
-            pivot(Motion.PIVOT_RIGHT, 90, cfg, left_motor_pwm, right_motor_pwm, ser)
+            drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
+            pivot(Motion.PIVOT_RIGHT, 5, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
+            pivot(Motion.PIVOT_RIGHT, 5, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
+            pivot(Motion.PIVOT_RIGHT, 5, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
+
             print("Complete")
             time.sleep(5)
             
