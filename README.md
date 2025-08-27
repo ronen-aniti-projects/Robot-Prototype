@@ -17,41 +17,32 @@ The following image collages show the results and the process of my mechanical d
 The mechanical subsystem, the body of the robot, provides a physical structure, provides holding places for each of the robot's sensors, actuators, integrated circuits, and computing boards, and contributes, to the build, through an adjustable shelving system and a front-facing sensor mount that I designed and manufactured progress towards durability, progress towards modularity, and progress towards adaptability. I developed the shelving system so each shelf can be adjusted for height and fastened securely to shelving side panels with M3 machine screws, nuts, and washers. Robot sensors, actuators, and boards are mounted to each shelf with M2 and M3 fastener hardware. Because I 3-D printed each shelf with an infill density of 50%, additional through holes can be drilled without sacrificing structural integrity when component placement needs changing. Additionally, the front-facing mount, holding the Raspberry Pi camera module (Raspberry Pi Camera Module 2) and ultrasonic distance sensor (RCWL-1601), features 2 mm mounting holes for standoff mounts to the camera, a rectangular cutout for the camera's flat-flex ribbon cable, and a rectangular slide-in retention slot for the distance sensor. While the vehicle is in operation, or when the vehicle is shaken from side to side, no component moves from its mounted position. Furthermore, the shelving system doubles as a case that shields the internal components from dust and debris and remains intact when the robot falls over on its side. 
 
 ## Vision Subsystem
-The primary challenge that the robot's vision subsystem addresses is the challenge of needing to know first, whether a 3D-printed block exists in the robot's field of view and second, the degree of yaw-angle misalignment between the robot and the 3D-printed block.  
+The primary challenge that the robot's vision subsystem addresses is the challenge of needing to know first, whether a 3D-printed block exists in the robot's field of view, and second, the degree of yaw-angle misalignment between the robot and the 3D-printed block. A secondary challenge is that the robot will not be able to process camera image frames in real time due to the fact that the computational processing capability of the Raspberry Pi 4 is insufficient for doing real-time image processing for object detection. The solution I designed is a straightforward color-masking pipeline for 3D-printed block detection comprising seven steps. So long as this pipeline is executed in lower-than-real-time frame rates, the Raspberry Pi should be able to handle the computational demand that the pipeline introduces.  
 
+The seven steps of the image processing pipeline are as follows: 
 
-Explain that the problem that the vision subsystem solves is identifying whether the block of interest exists in the current scene and if so, the degree of mis-alignment between the robot front-facing direction and the object. 
+**1. Raw Image Capture.** The open CV function is named. The inputs are named and the outputs are named. An example photo is provided. `Picam2().capture_array()`
 
-Explain that the vision sub-system is comprised of a Raspberry Pi camera module and software I developed for block detection. The software utilizes HSV masking logic to identify blocks of a certain color. It also utilizes a calibration constant (pixel to angle) to estimate a pivot angle to the center of each object identified in an image. The output of this module is thus used as input to the drive system, which is responsible for driving to the identified block.   
+**2. Region of Interest Crop.** `bgr[:int(Percent * H)] = 0`
 
-1. Raw Image
+**2.5 BGR to HSV Conversion** `cv2.cvtColor(rgb, cv2.COLOR_BGR2HSV)`
 
-2. Region of Interest Crop 
+**3. Mask Image** `cv2.inRange(hsv, thresh_low, thresh_high)`
 
-3. Masked Image
+**4. Detect Contours** `cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)`
 
-4. Contour Detection
+**5. Select Largest Contour.** `max(countours, key=cv2.contourArea)`
 
-5. Largest Contour
+**6. Bounding Box Draw.** `x, y, w, h = cv2.boundingRect(largest_contour)`
 
-6. Bounding Box Draw
+**7. Pivot Angle Estimation** `pivot_angle = calibration_ratio * (x_bb - x_image)` 
 
-7. Pixel Offset from Center
-
-8. Estimate Pivot Angle
-
-**Insert a picture of one processed camera image, showing bounding box drawn around the target block with an arrow pointing to its BB center and a pivot direction and pivot angle on the processed image as text.**
-
-Algorithm
-Sequence: 
-1. Read Image
-2. Mask in color range
-3. Find Largest Contour
-4. Compute Bounding Box around Contour
-5. Compute Pixel Offset from Image Center
-6. Compute Estimated Required Pivot 
 
 ## Drive Sub-System
+
+
+
+
 Explain that the drive sub-system is comprised of four DC motors driven by an H-bridge motor driver that supports two channels, one for the left-side motors, and the other for the right-side motors. Explain that I developed four motion primitive functions to drive the robot: pivot_left, pivot_right, forward, reverse. Explain that the forward and reverse functions employ a while loop that iterates on distance traveled as measured by encoder ticks and also a P-controller with feedforward having an error function that is the error in initial heading. Explain that the pivot functions employ a simple while loop over error in current heading vs desired heading. Explain that the sensors are an IMU and optical encoders. 
 
 **Show a video of the robot driving in a square.** 
