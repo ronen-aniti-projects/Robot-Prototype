@@ -80,8 +80,9 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
     while abs(error) > 0:
         adjustment = abs(error) * kp
         left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-        right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
+        right_motor_pwm.ChangeDutyCycle(np.clip((base_duty + adjustment) * 0.95, 0, 100))
         error = wrap_angle(target_heading - read_heading(ser))
+        time.sleep(0.005)
 
     left_motor_pwm.ChangeDutyCycle(0)
     right_motor_pwm.ChangeDutyCycle(0)
@@ -203,9 +204,9 @@ if __name__ == "__main__":
     GPIO.setup(cfg["right_encoder_pin"], GPIO.IN)
     
     # Instantiate the PWM object on both motors
-    left_motor_pwm = GPIO.PWM(cfg["left_motor_pwm"], 1000)
+    left_motor_pwm = GPIO.PWM(cfg["left_motor_pwm"], 400)
     left_motor_pwm.start(0)
-    right_motor_pwm = GPIO.PWM(cfg["right_motor_pwm"], 1000)
+    right_motor_pwm = GPIO.PWM(cfg["right_motor_pwm"], 400)
     right_motor_pwm.start(0)
 
     # Instantiate a serial object
@@ -224,7 +225,8 @@ if __name__ == "__main__":
     try:
         while True:
             
-            drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
+            #drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
+            #time.sleep(2)
             pivot(Motion.PIVOT_RIGHT, 90, cfg, left_motor_pwm, right_motor_pwm, ser)
             print("Complete")
             time.sleep(5)
