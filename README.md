@@ -22,7 +22,7 @@ The vision subsystem determines (i) if a 3D printed block exists in the robot’
 In the following video, I demonstrate the vision subsystem’s ability to detect a 3D printed block, determine the angle of misalignment, and determine whether or not the block is in gripping position.
 
 ![Visual Subsystem Demo Screencast](docs/gallery/visual_demo.gif)
-
+![Visual Subsystem Demo Not Screencast](docs/gallery/vis_out.gif)
 
 
 ## The Motor Subsystems
