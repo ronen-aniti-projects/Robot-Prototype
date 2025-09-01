@@ -21,9 +21,8 @@ The vision subsystem determines (i) if a 3D printed block exists in the robot’
 
 In the following video, I demonstrate the vision subsystem’s ability to detect a 3D printed block, determine the angle of misalignment, and determine whether or not the block is in gripping position.
 
-![Visual Subsystem Demo Screencast](docs/gallery/visual_demo.gif)
 ![Visual Subsystem Demo Not Screencast](docs/gallery/vis_out.gif)
-
+![Visual Subsystem Demo Screencast](docs/gallery/visual_demo.gif)
 
 ## The Motor Subsystems
 
@@ -48,6 +47,7 @@ The navigation subsystem provides a means for tracking the robot’s pose throug
 The following video is a demonstration of the robot executing the relocalization routine at the drop-off site. 
 
 The following figure illustrates the sonar trace, with walls showing up as plateaus. 
+![Sonar Trace](docs/gallery/Sonar_Trace.png)
 
 ## Note
 This project is a work in progress. I’m currently troubleshooting unreliable pivot maneuvers. Wheel slippage improved after switching from plastic to silicone tires, but not completely. I plan to try solving this by coating the tires with hot glue–in a tread-like pattern. A second issue is insufficient motor torque. The added weight from the 3D-printed mounts and casing, combined with powering four motors from a 6 V AA battery pack through a single L298N motor driver (which drops ~ 2 V internally), leaves too little voltage–and therefore current–at the motor terminals. As a result, the robot frequently stalls during pivots, especially on inclines, even at full PWM. To address this, I plan to replace my 6 V AA battery pack with a 7.4 V 5000 mAh 50 C high discharge LiPo battery. 
