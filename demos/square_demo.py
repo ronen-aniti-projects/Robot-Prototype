@@ -12,7 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-# ----------------- Your existing bits (unchanged shape) -----------------
+# ----------------- Enums & low-level helpers -----------------
 class Motion(Enum):
     FORWARD = 1
     REVERSE = 2
@@ -25,16 +25,19 @@ def set_logic(mode: Motion, cfg):
         GPIO.output(cfg["left_motor_logic_2"], GPIO.HIGH)
         GPIO.output(cfg["right_motor_logic_1"], GPIO.LOW)
         GPIO.output(cfg["right_motor_logic_2"], GPIO.HIGH)
+
     elif mode == Motion.REVERSE:
         GPIO.output(cfg["left_motor_logic_1"], GPIO.HIGH)
         GPIO.output(cfg["left_motor_logic_2"], GPIO.LOW)
         GPIO.output(cfg["right_motor_logic_1"], GPIO.HIGH)
         GPIO.output(cfg["right_motor_logic_2"], GPIO.LOW)
+
     elif mode == Motion.PIVOT_LEFT:
         GPIO.output(cfg["left_motor_logic_1"], GPIO.HIGH)
         GPIO.output(cfg["left_motor_logic_2"], GPIO.LOW)
         GPIO.output(cfg["right_motor_logic_1"], GPIO.LOW)
         GPIO.output(cfg["right_motor_logic_2"], GPIO.HIGH)
+
     elif mode == Motion.PIVOT_RIGHT:
         GPIO.output(cfg["left_motor_logic_1"], GPIO.LOW)
         GPIO.output(cfg["left_motor_logic_2"], GPIO.HIGH)
@@ -52,37 +55,12 @@ def read_heading(ser):
         return None
 
 def wrap_angle(raw_angle):
+    """Map degrees to [-180, 180)."""
     return ((raw_angle + 180) % 360) - 180
 
-def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
-    # Minimal “do the thing”; we’ll use commanded angle for pose update.
-    set_logic(mode, cfg)
 
-    base_duty = 100
-    kp = 0.0
-
-    start_heading = read_heading(ser)
-    if start_heading is None:
-        start_heading = 0
-    if mode == Motion.PIVOT_LEFT:
-        target_heading = wrap_angle(start_heading - pivot_angle_deg)
-    elif mode == Motion.PIVOT_RIGHT:
-        target_heading = wrap_angle(start_heading + pivot_angle_deg)
-    else:
-        target_heading = start_heading
-
-    error = wrap_angle(target_heading - (read_heading(ser) or start_heading))
-    while abs(error) > 0:
-        adjustment = abs(error) * kp
-        left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-        right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-        error = wrap_angle(target_heading - (read_heading(ser) or start_heading))
-
-    left_motor_pwm.ChangeDutyCycle(0)
-    right_motor_pwm.ChangeDutyCycle(0)
-
+# ----------------- Straight-line drive (your working style) -----------------
 def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser):
-    # Minimal straight-line with IMU trim; we’ll use commanded distance for pose update.
     set_logic(mode, cfg)
 
     ticks_per_rev = cfg["ticks_per_rev"]
@@ -95,9 +73,12 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
     count_left = 0
     count_right = 0
 
-    base_heading = read_heading(ser) or 0
-    base_duty = 100
-    kp = 10
+    base_heading = read_heading(ser)
+    if base_heading is None:
+        base_heading = 0
+
+    LINE_BASE_DUTY = 55   # <<— modest power so you don't slam into corners
+    KP_HEADING = 8        # simple trim
 
     while (count_left + count_right) / 2 < target_ticks:
         cur_left = GPIO.input(cfg["left_encoder_pin"])
@@ -110,28 +91,31 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
             count_right += 1
             prev_state_right = cur_right
 
-        current_heading = read_heading(ser) or base_heading
+        current_heading = read_heading(ser)
+        if current_heading is None:
+            current_heading = base_heading
+
         heading_error = wrap_angle(base_heading - current_heading)
 
         if heading_error < 0:
-            adj = kp * abs(heading_error)
+            adj = KP_HEADING * abs(heading_error)
             if mode is Motion.FORWARD:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adj, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adj, 0, 100))
-            else:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adj, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adj, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY - adj, 0, 100))
+                right_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY + adj, 0, 100))
+            else:  # REVERSE
+                left_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY + adj, 0, 100))
+                right_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY - adj, 0, 100))
         elif heading_error > 0:
-            adj = kp * abs(heading_error)
+            adj = KP_HEADING * abs(heading_error)
             if mode is Motion.FORWARD:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adj, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adj, 0, 100))
-            else:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adj, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adj, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY + adj, 0, 100))
+                right_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY - adj, 0, 100))
+            else:  # REVERSE
+                left_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY - adj, 0, 100))
+                right_motor_pwm.ChangeDutyCycle(np.clip(LINE_BASE_DUTY + adj, 0, 100))
         else:
-            left_motor_pwm.ChangeDutyCycle(base_duty)
-            right_motor_pwm.ChangeDutyCycle(base_duty)
+            left_motor_pwm.ChangeDutyCycle(LINE_BASE_DUTY)
+            right_motor_pwm.ChangeDutyCycle(LINE_BASE_DUTY)
 
         time.sleep(0.001)
 
@@ -139,9 +123,66 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
     right_motor_pwm.ChangeDutyCycle(0)
 
 
-# ----------------- Tiny helpers for pose & plot (barebones) -----------------
-# Global-ish pose state (meters, radians)
-x, y, yaw = 0.0, 0.0, 0.0
+# ----------------- Simple, high-torque pivot with tiny brake -----------------
+def pivot_90(mode, cfg, left_motor_pwm, right_motor_pwm, ser):
+    """
+    Minimal pivot at full PWM with a small tolerance + brief counter-pulse brake.
+    Keeps logic simple while preventing big overshoot.
+    """
+    assert mode in (Motion.PIVOT_LEFT, Motion.PIVOT_RIGHT)
+    set_logic(mode, cfg)
+
+    # Tunables (simple):
+    FULL_DUTY = 100
+    PIVOT_TOL_DEG = 3
+    BRAKE_MS = 70
+    BRAKE_DUTY = 40
+
+    start = read_heading(ser)
+    if start is None:
+        start = 0
+
+    if mode == Motion.PIVOT_LEFT:
+        target = wrap_angle(start - 90)
+    else:
+        target = wrap_angle(start + 90)
+
+    # Spin at full duty until within tolerance
+    left_motor_pwm.ChangeDutyCycle(FULL_DUTY)
+    right_motor_pwm.ChangeDutyCycle(FULL_DUTY)
+
+    last_h = start
+    while True:
+        h = read_heading(ser)
+        if h is None:
+            h = last_h
+        last_h = h
+
+        err = wrap_angle(target - h)
+        if abs(err) <= PIVOT_TOL_DEG:
+            break
+        time.sleep(0.01)
+
+    # Hard stop
+    left_motor_pwm.ChangeDutyCycle(0)
+    right_motor_pwm.ChangeDutyCycle(0)
+
+    # Brief counter-spin to kill inertia (very simple “brake”)
+    if mode == Motion.PIVOT_LEFT:
+        set_logic(Motion.PIVOT_RIGHT, cfg)
+    else:
+        set_logic(Motion.PIVOT_LEFT, cfg)
+
+    left_motor_pwm.ChangeDutyCycle(BRAKE_DUTY)
+    right_motor_pwm.ChangeDutyCycle(BRAKE_DUTY)
+    time.sleep(BRAKE_MS / 1000.0)
+
+    left_motor_pwm.ChangeDutyCycle(0)
+    right_motor_pwm.ChangeDutyCycle(0)
+
+
+# ----------------- Tiny helpers for pose & plot -----------------
+x, y, yaw = 0.0, 0.0, 0.0  # meters, radians
 
 def norm_angle(a):
     return (a + math.pi) % (2 * math.pi) - math.pi
@@ -166,7 +207,6 @@ def init_plot(side_m):
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
     ax.set_title("Estimated path (updates after each action)")
-    # intended square
     ax.plot([0, side_m, side_m, 0, 0], [0, 0, side_m, side_m, 0], linestyle="--")
     line, = ax.plot([0.0], [0.0], marker="o")
     return fig, ax, line
@@ -178,7 +218,7 @@ def update_plot(fig, ax, line, xs, ys):
     plt.pause(0.01)
 
 
-# ----------------- Main: 5 ft square with 10° corner pivots -----------------
+# ----------------- Main: 5 ft square, single 90° corners -----------------
 if __name__ == "__main__":
     with open("config.json") as f:
         cfg = json.load(f)
@@ -203,7 +243,6 @@ if __name__ == "__main__":
     # ~5 ft per side
     side_m = 1.524
     side_cm = side_m * 100.0
-    corner_step_deg = 10
 
     # plotting state
     fig, ax, line = init_plot(side_m)
@@ -211,25 +250,23 @@ if __name__ == "__main__":
 
     try:
         for side in range(1, 5):
-            # move one side
+            # Move one side
             drive_line_imu(Motion.FORWARD, side_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
             step_pose_forward(side_m)
-            print(f"Moved {side_m:.3f} m FORWARD; new pose (x={x:.3f}, y={y:.3f}, yaw={math.degrees(yaw):.1f}°)")
+            print(f"Moved {side_m:.3f} m FORWARD; pose (x={x:.3f}, y={y:.3f}, yaw={math.degrees(yaw):.1f}°)")
             xs.append(x); ys.append(y)
             update_plot(fig, ax, line, xs, ys)
 
-            # corner (skip after 4th side if you want to stop aligned)
+            # Corner (skip after 4th side to end aligned)
             if side < 4:
-                for _ in range(0, 90, corner_step_deg):
-                    pivot(Motion.PIVOT_RIGHT, corner_step_deg, cfg, left_motor_pwm, right_motor_pwm, ser)
-                    step_pose_turn(corner_step_deg)  
-                    print(f"Pivoted {corner_step_deg}° RIGHT; new pose (x={x:.3f}, y={y:.3f}, yaw={math.degrees(yaw):.1f}°)")
-                    # small dot at corner progress (optional)
-                    xs.append(x); ys.append(y)
-                    update_plot(fig, ax, line, xs, ys)
+                pivot_90(Motion.PIVOT_RIGHT, cfg, left_motor_pwm, right_motor_pwm, ser)
+                step_pose_turn(90)
+                print(f"Pivoted 90° RIGHT; pose (x={x:.3f}, y={y:.3f}, yaw={math.degrees(yaw):.1f}°)")
+                xs.append(x); ys.append(y)
+                update_plot(fig, ax, line, xs, ys)
 
         print("Square complete.")
-        time.sleep(3)
+        time.sleep(2)
 
     except KeyboardInterrupt:
         pass
@@ -238,5 +275,5 @@ if __name__ == "__main__":
         left_motor_pwm.stop()
         right_motor_pwm.stop()
         GPIO.cleanup()
-        # If headless plotting, you can save the last frame:
+        # If headless plotting, save the last frame:
         # plt.savefig("square_path.png")

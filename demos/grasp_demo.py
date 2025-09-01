@@ -27,6 +27,12 @@ SEARCH_STEP_DEG        = 10            # pivot increments during search
 APPROACH_STEP_CM       = 5.0           # forward chunk distance (re-check vision each step)
 MAX_APPROACH_STEPS     = 60            # safety stop (~3 m) to avoid runaway
 
+# Post-grasp behavior
+BACKUP_AFTER_GRASP_CM   = 8.0   # how far to reverse before dropping
+DROP_SETTLE_S           = 0.6   # brief pause to let robot stop rocking
+POST_DROP_FORWARD_CM    = 2.0   # optional: move forward a touch after drop (0 to disable)
+
+
 # ===================== Robot Motion (barebones) =====================
 class Motion(Enum):
     FORWARD = 1
@@ -92,7 +98,7 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
 
     error = wrap_angle(target_heading - (read_heading(ser) or start_heading))
     # spin until we hit the target (approx); with kp=0, we just run base duty
-    while abs(error) > 0:
+    while abs(error) > 2:
         left_motor_pwm.ChangeDutyCycle(base_duty)
         right_motor_pwm.ChangeDutyCycle(base_duty)
         error = wrap_angle(target_heading - (read_heading(ser) or start_heading))
@@ -299,9 +305,21 @@ def main():
             print("IN POSITION: closing gripper.")
             close_gripper(gripper_pwm, cfg)
 
-            # Optional: back out a bit after grasp
-            # print("Backing out 10 cm...")
-            # drive_line_imu(Motion.REVERSE, 10.0, cfg, left_motor_pwm, right_motor_pwm, ser)
+            # Back out slightly, settle, then drop
+            if BACKUP_AFTER_GRASP_CM > 0:
+                print(f"Backing out {BACKUP_AFTER_GRASP_CM:.1f} cm...")
+                drive_line_imu(Motion.REVERSE, BACKUP_AFTER_GRASP_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
+
+            print(f"Settling for {DROP_SETTLE_S:.2f}s...")
+            time.sleep(DROP_SETTLE_S)
+
+            print("Opening gripper to drop.")
+            open_gripper(gripper_pwm, cfg)
+
+            # Optional: ease forward a touch so the gripper clears the object
+            #if POST_DROP_FORWARD_CM > 0:
+            #    print(f"Clearing forward {POST_DROP_FORWARD_CM:.1f} cm...")
+            #    drive_line_imu(Motion.FORWARD, POST_DROP_FORWARD_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
 
             print("Task complete.")
             time.sleep(1.0)

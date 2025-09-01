@@ -63,8 +63,8 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
     base_heading   = read_heading(ser)
 
     # Set the P-controller parameters 
-    base_duty   = 100
-    kp          = 0.0
+    base_duty   = 75
+    kp          = 10
     
     # Read the IMU to record the start heading
     start_heading = read_heading(ser)
@@ -77,11 +77,12 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
     
     error = wrap_angle(target_heading - read_heading(ser))
 
-    while abs(error) > 0:
+    while abs(error) > 2:
         adjustment = abs(error) * kp
         left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
         right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
         error = wrap_angle(target_heading - read_heading(ser))
+        time.sleep(0.001)
 
     left_motor_pwm.ChangeDutyCycle(0)
     right_motor_pwm.ChangeDutyCycle(0)
@@ -110,7 +111,7 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
     base_heading   = read_heading(ser)
 
     # Set the P-controller parameters 
-    base_duty   = 50
+    base_duty   = 100
     kp          = 10
     
     # Track the encoder error and the heading error
@@ -150,7 +151,6 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
             if mode is Motion.FORWARD:
                 left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
                 right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-            
             if mode is Motion.REVERSE:
                 left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
                 right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
@@ -217,17 +217,18 @@ if __name__ == "__main__":
     ticks_per_rev = cfg["ticks_per_rev"]
     wheel_diameter_cm = cfg["wheel_diameter_m"] * 100.0
     wheel_circumference_cm =  np.pi * wheel_diameter_cm
-    target_revs = 7
+    target_revs = 5
     target_distance_cm = wheel_circumference_cm * target_revs
     
     # Testing loop: Drive to target distance and repeat
     try:
-        while True:
-            
+        while True: 
             drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
             pivot(Motion.PIVOT_RIGHT, 90, cfg, left_motor_pwm, right_motor_pwm, ser)
             time.sleep(2)
-            
+            #pivot(Motion.PIVOT_RIGHT, 45, cfg, left_motor_pwm, right_motor_pwm, ser)
+            #time.sleep(2)           
             #drive_line_imu(Motion.REVERSE, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
             #pivot(Motion.PIVOT_RIGHT, 90, cfg, left_motor_pwm, right_motor_pwm, ser)
             #print("Complete")
