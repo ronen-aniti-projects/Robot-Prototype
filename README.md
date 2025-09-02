@@ -40,7 +40,7 @@ In the following video, I demonstrate the vision subsystem’s ability to detect
 The drive motor subsystem assists the robot in achieving any (x, y, psi) pose within its operating environment. I built the drive motor system with four “TT gearbox” DC motors, motor driver (L298N), silicone tread wheels, and emergency shutoff switch. Since the L298N supports two motor channels, and since I wanted to achieve differential drive, I connected the both left-side motors to one, and both right-side motors to the other. Regarding sensors, for odometry, I integrated a pair of optical encoders, each mounted to one motor on a different side of the robot, as well as an IMU (BNO055) to track heading. In a Python-based software module, I integrate the sensors and motors, and implement four motion primitive drive functions–two for straight-line motion (forward and reverse) and two for angular pivoting (left pivot and right pivot). Within all four motion functions, I implement feedback control, specifically proportional control. For the straight-line motion functions, the error function derives from IMU heading offset from heading recorded prior to starting motion–for the pivot functions, IMU heading offset from the target heading. All four run within a speed-limited 1 KHz control loop, with the stop condition, for the straight-line motion functions, derived from whether or not encoder ticks equal the required number and for the pivot functions, whether the target heading is within tolerance of the current measurement. 
 
 With the following demonstration, I show the robot’s capability to drive in a square: 
-
+[![Watch Demo](docs/gallery/Robot_Gallery_1.png)](https://youtu.be/4IkJXeA65EI)
 <video
   src="https://youtu.be/4IkJXeA65EI"
   width="720"
