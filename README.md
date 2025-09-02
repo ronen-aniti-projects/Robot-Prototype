@@ -4,6 +4,21 @@
 
 My aim is to design and build, from component parts and software modules, a robot capable of autonomous transport--over the unfinished concrete planer inclined surface of a residential swimming pool--of 3D-printed blocks from scattered locations to a designated 2 ft. by 2 ft. drop-off zone, all without colliding with the walls of the swimming pool or undelivered blocks. My motivation for this project is (i) in familiarizing myself with the process of integrating sensors, actuators, and computing boards, (ii) putting into practice some robotics concepts, including navigation, localization, object detection, and drive control, and (iii) establishing a "platform project" that can serve as a physical testing ground as I advance with my University of Maryland (College Park) M.Eng. Robotics Engineering studies, much of which is simulation-based only. 
 
+
+## The Results to Date
+
+### The Results
+* Integrated mechanical subsystem
+* Integrated a vision subsystem
+* Integrated a drive motor subsystem
+* Integrated a gripper subsystem
+* Integrated a visiual-motor subsystem
+* Laid groundwork for a navigation subsystem
+
+### The Current Work
+* Identified insufficient torque for reliable driving. Exploring replacing AA rechargable battery pack with a LiPo battery pack. 
+* Realized the limits of dead-reckoning only based navigation. Laying groundwork for ultrasonic distance based relocalization routine to correct for error accumulation. 
+
 ## The Mechanical Sub-System
 The robot's body comprises a commercial-off-the-shelf chassis (DFRobot 4WD Baron Mobile Robot Platform), four commercial-off-the-shelf silicone tread orange and clear motor wheels (Adafruit), a commercial-off-the-shelf servo-gripper assembly (ServoCity Servo-Driven Parallel Gripper Kit), a shelf-based mounting assembly I designed and manufactured, and a perception mounting part I designed and manufactured--these latter two I designed in Dassault Systèmes computer aided design (CAD) program 2024 Solidworks, I prepared for 3-D printing in computer aided manufacturing (CAM) program Prusa Slicer, and I manufactured on Prusa MK3 and Prusa MK4 fusion deposition modeling (FDM) 3-D printers at University of Maryland's Rapid Prototyping Center. I fastened all of the mechanical components with 2 mm and 3 mm machine screws and associated nut, washer, and standoff fastener hardware. The primary challenge with implementing a mechanical subsystem for this robot was in striking a balance between leveraging commercial-off-the-shelf components, which are accessible but come only in a single form, and between leveraging custom-made components, which can be highly tailored to the application at the expense of requiring development time to produce.
 
@@ -34,6 +49,7 @@ With the following demonstration, I show the robot’s capability to drive in a 
 
 [![Square Demo](docs/gallery/Square_Demo_Poster.png)](https://youtu.be/4IkJXeA65EI)
 
+![Drive Wiring](docs/gallery/Drive_Wiring.png)
 ### The Gripper Motor Subsystem
 The gripper motor subsystem enables the robot to pick-and-place 3D printed blocks. After the robot identifies a 3D printed block and maneuvers until the block is in position, the gripper activates, grasping the object. While in transit to the destination block drop-off zone, the gripper keeps a firm hold on the block, keeping the block from dropping. When the robot reaches the drop-off zone, the gripper activates again, dropping the block in place. The subsystem comprises a servo-gripper kit (Proton Servo), which I mounted to the front of the robot chassis. The gripper’s servo motor responds to pulse-width modulation (PWM). I implement a Python-based software module to provide functions for opening and closing the gripper. 
 
@@ -59,7 +75,7 @@ The following video is a demonstration of the robot executing the relocalization
 The following figure illustrates the sonar trace, with walls showing up as plateaus. 
 ![Sonar Trace](docs/gallery/Sonar_Trace.png)
 
-## Note
+## Sept. 2: Troubleshooting Unreliable Driving
 This project is a work in progress. I’m currently troubleshooting unreliable pivot maneuvers. Wheel slippage improved after switching from plastic to silicone tires, but not completely. I plan to try solving this by coating the tires with hot glue–in a tread-like pattern. A second issue is insufficient motor torque. The added weight from the 3D-printed mounts and casing, combined with powering four motors from a 6 V AA battery pack through a single L298N motor driver (which drops ~ 2 V internally), leaves too little voltage–and therefore current–at the motor terminals. As a result, the robot frequently stalls during pivots, especially on inclines, even at full PWM. To address this, I plan to replace my 6 V AA battery pack with a 7.4 V 5000 mAh 50 C high discharge LiPo battery. 
 
 ![Next Steps](docs/gallery/Next_Steps.JPG)
