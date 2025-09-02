@@ -61,3 +61,5 @@ The following figure illustrates the sonar trace, with walls showing up as plate
 
 ## Note
 This project is a work in progress. I’m currently troubleshooting unreliable pivot maneuvers. Wheel slippage improved after switching from plastic to silicone tires, but not completely. I plan to try solving this by coating the tires with hot glue–in a tread-like pattern. A second issue is insufficient motor torque. The added weight from the 3D-printed mounts and casing, combined with powering four motors from a 6 V AA battery pack through a single L298N motor driver (which drops ~ 2 V internally), leaves too little voltage–and therefore current–at the motor terminals. As a result, the robot frequently stalls during pivots, especially on inclines, even at full PWM. To address this, I plan to replace my 6 V AA battery pack with a 7.4 V 5000 mAh 50 C high discharge LiPo battery. 
+
+![Next Steps](docs/gallery/Next_Steps.JPG)
