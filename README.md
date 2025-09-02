@@ -21,18 +21,9 @@ The vision subsystem determines (i) if a 3D printed block exists in the robot’
 
 In the following video, I demonstrate the vision subsystem’s ability to detect a 3D printed block, determine the angle of misalignment, and determine whether or not the block is in gripping position.
 
-  <video
-    src="docs/gallery/"
-    width="720"
-    controls
-    muted
-    playsinline
-    poster="docs/demos/posters/grasp_poster.jpg">
-    Your browser does not support the video tag.
-  </video>
-
-![Visual Subsystem Demo Not Screencast](docs/gallery/vis_out.gif)
 ![Visual Subsystem Demo Screencast](docs/gallery/visual_demo.gif)
+
+[![Visual Subsystem Demo External View](docs/gallery/Visual_Demo_Poster.png)](https://youtu.be/7oZMbLTcFHM)
 
 ## The Motor Subsystems
 
@@ -48,15 +39,22 @@ The gripper motor subsystem enables the robot to pick-and-place 3D printed block
 
 In the following video, I demonstrate the robot gripping a 3D printed block, holding it for 5 seconds, then dropping the 3D printed block. 
 
+[![Gripper Demo](docs/gallery/Gripper_Demo_Poster.png)](https://youtu.be/0rDtxxSHDeY)
+
 ## The Visual-Motor Integration
 The vision and motor subsystems work together. The vision subsystem provides the means for determining the relative position of blocks from the camera. The motor subsystem provides the means for approaching the 3D printed block, then grasping the 3D printed block when the conditions for grasping are met. 
 
 In the following demonstration, I show the robot tracking the 3D printed block, grasping it once in position, reversing slightly, then dropping the block. 
 
+![Grasp Demo](docs/gallery/Grasp.gif)
+
 ## The Navigation Subsystem
 The navigation subsystem provides a means for tracking the robot’s pose throughout the mission. I’ve implemented a software module for navigation that incorporates both interoceptive sensor data (encoders and IMU) and exteroceptive sensor data (sonar). The reason I incorporate both sensor types is to address the sensor-drift challenge of estimated pose from interoceptive sensors alone. The robot tracks its pose based on interoceptive sensor measurements after each motion. When the pose estimate falls within a known corner of the map, the drop-off zone, the robot performs a relocalization routine. The robot spins 360 degrees, collecting sonar measurements. Logic I’ve implemented in software processes the sonar trace by identifying relative distance to walls, and thereby inferring (x, y) position within the pre-loaded map. 
 
 The following video is a demonstration of the robot executing the relocalization routine at the drop-off site. 
+
+[![Relocalize Demo](docs/gallery/Relocalize_Demo_Poster.png)](https://youtu.be/HixW7EjjSHo)
+
 
 The following figure illustrates the sonar trace, with walls showing up as plateaus. 
 ![Sonar Trace](docs/gallery/Sonar_Trace.png)
