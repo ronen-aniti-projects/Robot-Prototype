@@ -11,6 +11,7 @@ HSV_LOW = np.array([95, 70, 40])     # Blue HSV mask low
 HSV_HIGH = np.array([130, 255, 255]) # Blue HSV high 
 BASE_CAL_RATIO = 0.061 # Instructor provided pixle : angle ratio at 640 px x 480 px
 SCALE_FACTOR = 2       # Demo uses 320 px x 240 px, so scale the ratio
+CAL_RATIO = BASE_CAL_RATIO * SCALE_FACTOR  # Scale the calibration ratio to the Picam demo resolution
 MIN_AREA = 300         # Minimum required contour for object detection
 ANGLE_TOLERANCE_DEGREES = 2.0    # Maximum absolute deviation requirement for being "in position"
 SUCCESS_MASK_PIXEL_RATIO = 0.95  # Percent of masked pixels required to be in success zone for being "in position"
