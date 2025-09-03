@@ -62,6 +62,15 @@ def find_plateaus(data, min_length=5, tolerance=1.0):
         i += 1
     return plateaus
 
+def extract_minima(plateaus, smoothed_distances, smoothed_headings):
+    minima = []
+    for start, end in plateaus:
+        seg = smoothed_distances[start:end+1]
+        local_min_idx = int(np.argmin(seg))
+        global_min_idx = start + local_min_idx
+        minima.append((smoothed_headings[global_min_idx], smoothed_distances[global_min_idx]))
+
+    return minima
 if __name__ == "__main__":
     
     # Load the sonar pin numbers
@@ -118,6 +127,10 @@ if __name__ == "__main__":
         # 2. Detect Plateaus
         plateaus = find_plateaus(smoothed_distances, min_length=5, tolerance=2.0)
 
+        # 3. Minima Extraction
+        minima = extract_minima(plateaus, smoothed_distances, smoothed_headings)
+        print("Minima:", minima)
+        
         plt.figure(figsize=(10, 6))
         # Plot original data with some transparency
         plt.plot(headings, distances, marker='.', linestyle='-', label='Raw Sonar Reading', alpha=0.3)
