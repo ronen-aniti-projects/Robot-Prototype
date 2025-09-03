@@ -34,6 +34,8 @@ The mechanical subsystem, the body of the robot, provides a physical structure, 
 ## The Vision Subsystem
 The vision subsystem determines (i) if a 3D printed block exists in the robot’s field of vision, (ii) the degree of misalignment between the robot and any identified block, and (iii) whether an identified block is “in position” to be gripped by the robot’s gripper. To achieve these, I implemented a Python-based and OpenCV-based vision processing pipeline based around HSV masking, morphology operations (opening and closing), contour detection, and bounding box drawing. The logic of the module considers the pixel offset of any detected block’s bounding box from the center of the image, converting this offset into a pivot angle command via multiplication by a pixel to angle calibration ratio. 
 
+![Vision Pipeline Table](docs/gallery/Vision_Pipeline_Table.png)
+
 In the following video, I demonstrate the vision subsystem’s ability to detect a 3D printed block, determine the angle of misalignment, and determine whether or not the block is in gripping position.
 
 ![Visual Subsystem Demo Screencast](docs/gallery/visual_demo.gif)
@@ -49,7 +51,15 @@ With the following demonstration, I show the robot’s capability to drive in a 
 
 [![Square Demo](docs/gallery/Square_Demo_Poster.png)](https://youtu.be/4IkJXeA65EI)
 
-![Drive Wiring](docs/gallery/Drive_Wiring.png)
+
+Here, I have tabulated the primary components, electrical connections, and key specifications for the components of the drive subsystem, with the first table detailing the motor and motor driver and the second table detailing the sensors. 
+
+
+
+![Drive Wiring Motors](docs/gallery/Drive_Wiring.png)
+
+![Drive Wiring Sensors](docs/gallery/Drive_Wiring_Sensors.png)
+
 ### The Gripper Motor Subsystem
 The gripper motor subsystem enables the robot to pick-and-place 3D printed blocks. After the robot identifies a 3D printed block and maneuvers until the block is in position, the gripper activates, grasping the object. While in transit to the destination block drop-off zone, the gripper keeps a firm hold on the block, keeping the block from dropping. When the robot reaches the drop-off zone, the gripper activates again, dropping the block in place. The subsystem comprises a servo-gripper kit (Proton Servo), which I mounted to the front of the robot chassis. The gripper’s servo motor responds to pulse-width modulation (PWM). I implement a Python-based software module to provide functions for opening and closing the gripper. 
 
