@@ -9,31 +9,30 @@ from picamera2 import Picamera2
 from libcamera import Transform
 import math
 
-# ===================== Vision & Control Parameters =====================
-# Vision thresholds (same spirit as your demo)
-ROI_PCT                = 0.20
-HSV_LOW                = np.array([95, 70, 40])
-HSV_HIGH               = np.array([130, 255, 255])
-CAL_RATIO              = 0.061 * 2     # pixel-to-deg mapping (you already tuned this)
-MIN_AREA               = 300
-ERROR_THRESHOLD_DEG    = 3.0           # heading tolerance to be considered "aligned"
-SUCCESS_ROI_PCT        = 0.30          # bottom band for "close enough"
-SUCCESS_MASK_PIXEL_RATIO = 0.95        # mask density in success band
+# ===== Parameters for Grasping Demonstration =====
+# Vision Parameters
+ROI_PCT  = 0.20                            # Percentage of top of frame to ignore
+HSV_LOW  = np.array([95, 70, 40])          # Blue HSV mask low 
+HSV_HIGH = np.array([130, 255, 255])       # Blue HSV mask high 
+BASE_CAL_RATIO = 0.061                     # Instructor provided pixle : angle ratio at 640 px x 480 px
+SCALE_FACTOR   = 2                         # Demo uses 320 px x 240 px, so scale the ratio
+CAL_RATIO = SCALE_FACTOR * BASE_CAL_RATIO  # Scale the provided ratio to the Picam demo resolution
+MIN_AREA             = 300                 # Minimum required contour for object detection
+ERROR_THRESHOLD_DEG  = 3.0                 # Maximum absolute deviation requirement for being "in position"
+SUCCESS_ROI_PCT      = 0.30                # Percentage of the bottom frame for "success" zone
+SUCCESS_MASK_PIXEL_RATIO = 0.95            # Percent of masked pixels required to be in success zone for being "in position"
 
-# Motion control
-PIVOT_DUTY_CYCLE       = 95            # raw pivot speed (0-100) for direct pivot PWM
-ALIGN_STEP_DEG         = 5             # pivot increments for alignment (right is positive)
-SEARCH_STEP_DEG        = 10            # pivot increments during search
-APPROACH_STEP_CM       = 5.0           # forward chunk distance (re-check vision each step)
-MAX_APPROACH_STEPS     = 60            # safety stop (~3 m) to avoid runaway
+# Motion Control Parameters
+PIVOT_DUTY_CYCLE       = 95    # Base duty cycle for pivot controller
+ALIGN_STEP_DEG         = 5     # Pivot alignment step (degrees), right(+), left (-)
+SEARCH_STEP_DEG        = 10    # Pivot spin search increment
+APPROACH_STEP_CM       = 5.0   # Forward step distance
+MAX_APPROACH_STEPS     = 60    # Stop safety distance
 
-# Post-grasp behavior
-BACKUP_AFTER_GRASP_CM   = 8.0   # how far to reverse before dropping
-DROP_SETTLE_S           = 0.6   # brief pause to let robot stop rocking
-POST_DROP_FORWARD_CM    = 2.0   # optional: move forward a touch after drop (0 to disable)
+# Grasp Parameters
+BACKUP_AFTER_GRASP_CM   = 8.0   # How far to reverse after grasping
 
-
-# ===================== Robot Motion (barebones) =====================
+# ===== Functions Necessary for Robot Driving ===== 
 class Motion(Enum):
     FORWARD = 1
     REVERSE = 2
@@ -77,14 +76,11 @@ def wrap_angle(raw_angle):
     return ((raw_angle + 180) % 360) - 180
 
 def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
-    """
-    Minimal pivot: we use IMU heading readings to stop near the target.
-    Uses commanded angle; if your IMU steps are coarse, small increments are more reliable.
-    """
     set_logic(mode, cfg)
 
     base_duty = PIVOT_DUTY_CYCLE
-    kp = 0.0  # simple open-loop duty; IMU used only to know when to stop
+    kp = 0.0  # Because motors currently supply insufficient torque, always apply base duty for pivots
+              # and do not use proportional control until fixed motor issues are fixed.
 
     start_heading = read_heading(ser)
     if start_heading is None:
@@ -108,9 +104,6 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
     right_motor_pwm.ChangeDutyCycle(0)
 
 def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser):
-    """
-    Minimal straight-line with IMU trim; called in small chunks (e.g., 5 cm).
-    """
     set_logic(mode, cfg)
 
     ticks_per_rev = cfg["ticks_per_rev"]
@@ -165,7 +158,7 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
     left_motor_pwm.ChangeDutyCycle(0)
     right_motor_pwm.ChangeDutyCycle(0)
 
-# ===================== Gripper =====================
+# ===== Functions Necessary for Gripper Control =====
 def open_gripper(gripper_pwm, cfg):
     duty = cfg.get("gripper_duty_open", 11.5)
     gripper_pwm.ChangeDutyCycle(duty)
@@ -176,23 +169,30 @@ def close_gripper(gripper_pwm, cfg):
     gripper_pwm.ChangeDutyCycle(duty)
     time.sleep(1.0)
 
-# ===================== Visual Helpers =====================
+# ===== Functions Necessary for Visual Processing =====
 def get_angle_and_success(mask, W, H):
-    """
-    Returns:
-      angle_deg (float or None): +right / -left (your convention),
-      is_in_success_zone (bool)
-    """
+    
+    # 7. Contour Detection: Computes the boundaries of groupings of activated mask pixels. 
+    #    Reason: Contours are the outline of detected objects. Finding contours means 
+    #            determining coordinate information regarding likely 3D printed blocks
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # 8. Largest Contour Filtering: Selects only the largest of all of these masked pixel groupings.
+    #    Reason: The largest contour is likely to be the closest block to the robot 
     largest = max(contours, key=cv2.contourArea) if contours else None
+    
+    
     angle = None
 
+    # 9. Pivot Angle Estimation: Converts the pixel offset into a pivot angle estimate. 
+    #    Reason: The estimated pivot angle provides a direct control input for correcting robot misalignment with the block.
     if largest is not None and cv2.contourArea(largest) > MIN_AREA:
         x, y, w, h = cv2.boundingRect(largest)
         center_x = x + w / 2.0
-        angle = CAL_RATIO * (center_x - W / 2.0)  # +right, -left
+        angle = CAL_RATIO * (center_x - W / 2.0) 
 
-    # success ROI test
+    # 10. Proximity Calculation: Almost all masked pixels lie within the designated “success zone” at the bottom of the image.
+    #     Reason: Confirms the block is close enough to the robot’s gripper for a successful grasp. 
     success_y_start = H - int(H * SUCCESS_ROI_PCT)
     total_mask_pixels = cv2.countNonZero(mask)
     if total_mask_pixels > 0:
@@ -205,15 +205,16 @@ def get_angle_and_success(mask, W, H):
 
     return angle, in_zone
 
-# ===================== Main Integrated Demo =====================
+# ===== Grasp Demonstration =====
 def main():
-    # ---- Load config ----
+    
+    # Load the robot configuration parameters
     with open("config.json") as f:
         cfg = json.load(f)
 
-    # ---- GPIO Setup ----
+    
+    # Set GPIO and instantiate PWM for all drive motors
     GPIO.setmode(GPIO.BOARD)
-    # Motor pins
     GPIO.setup(cfg["left_motor_pwm"], GPIO.OUT)
     GPIO.setup(cfg["right_motor_pwm"], GPIO.OUT)
     GPIO.setup(cfg["left_motor_logic_1"], GPIO.OUT)
@@ -222,24 +223,24 @@ def main():
     GPIO.setup(cfg["right_motor_logic_2"], GPIO.OUT)
     GPIO.setup(cfg["left_encoder_pin"], GPIO.IN)
     GPIO.setup(cfg["right_encoder_pin"], GPIO.IN)
+    left_motor_pwm = GPIO.PWM(cfg["left_motor_pwm"], 400)
+    left_motor_pwm.start(0)
+    right_motor_pwm = GPIO.PWM(cfg["right_motor_pwm"], 400)
+    right_motor_pwm.start(0)
 
-    # PWM Setup
-    left_motor_pwm = GPIO.PWM(cfg["left_motor_pwm"], 400); left_motor_pwm.start(0)
-    right_motor_pwm = GPIO.PWM(cfg["right_motor_pwm"], 400); right_motor_pwm.start(0)
-
-    # Gripper pins (fallback defaults if not in cfg)
+    # Set GPIO and PWM for gripper
     gripper_pin = cfg.get("gripper_pwm", 33)
     GPIO.setup(gripper_pin, GPIO.OUT)
     gripper_pwm = GPIO.PWM(gripper_pin, 50)
     gripper_pwm.start(cfg.get("gripper_duty_open", 11.5))  # start open
     time.sleep(0.5)
 
-    # Serial IMU
+    # Set up the IMU
     ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=.05)
     time.sleep(2.0)
     ser.reset_input_buffer()
 
-    # Camera
+    # Set up the Raspberry Pi camera
     picam = Picamera2()
     cam_cfg = picam.create_preview_configuration(
         main={"size": (320, 240), "format": "BGR888"},
@@ -249,91 +250,101 @@ def main():
     picam.start()
     time.sleep(0.2)
 
+    # Create a kernel for morphology operations
     kernel = np.ones((3, 3), np.uint8)
-    print("Visual servo + drive demo started. Ctrl+C to stop.")
+    
+    
+    print("Grasp Demo Started. Press Ctrl+C to STOP.")
 
     try:
-        # ---- State machine loop ----
+        
+        # Track 
         steps_taken = 0
         while True:
+            
+            
+            # 1. Raw Image Capture: Captures a raw RGB image with the Pi camera. 
+            #    Reason: The image is the basic unit of analysis for this perception pipeline   
             frame = picam.capture_array()
             H, W, _ = frame.shape
 
-            # Ignore top ROI
+            # 2. ROI Crop: Crops out the top portion of the image. 
+            #    Reason: The top portion of the image is NOT ground plane and ONLY increases 
+            #            the odds of false object detection. 
             proc = frame.copy()
             roi_height = int(H * ROI_PCT)
             proc[0:roi_height] = 0
 
+    
+            # 3. HSV Conversion: Converts the cropped image into HSV colorspace. 
+            #    Reason: HSV provides more robust means for object detection based on color            
             hsv = cv2.cvtColor(proc, cv2.COLOR_RGB2HSV)
+            
+            # 4. Blue Color Mask: Creates a binary mask where activated pixels are HSV blue.
+            #    Reason: The 3D printed blocks are all blue. This step will identify any present in the image.         
             mask = cv2.inRange(hsv, HSV_LOW, HSV_HIGH)
+            
+            # 5. Morphological Operning: Reduces “salt noise” in the HSV mask image.
+            #    Reason: Masking typically produces some degree of salt noise.  
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            
+            # 6. Morphological Closing: Patches small holes in the HSV mask image. 
+            #    Reason: Masking often activates most but not all pixels along continuous domains. 
             mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
+            # Verify all required conditions for grasping
             angle, in_zone = get_angle_and_success(mask, W, H)
-
-            if angle is None:
-                # --- SEARCH: no target; pivot in chunks to scan ---
-                print("NO TARGET -> SEARCH PIVOT")
+            
+            # When the robot fails to identify a target, it will pivot to the RIGHT by a step increment, then SKIP
+            # to the next iteration of this main loop, to look again. 
+            if angle is None:  
+                print("NO SEE TARGET. SPINNING SOME, AND LOOKING AGAIN")
                 pivot(Motion.PIVOT_RIGHT, SEARCH_STEP_DEG, cfg, left_motor_pwm, right_motor_pwm, ser)
                 time.sleep(0.05)
                 continue
 
-            # --- ALIGN: pivot to reduce heading error ---
-            if abs(angle) > ERROR_THRESHOLD_DEG:
-                # Right is +, Left is - (your convention).
+            # --- Verify All Conditions Required for Grasping ---
+            
+            # Necessary Condition 1: Alignment: The estimated pivot angle is within a small tolerance of 0.0°.
+            # Reason: Almost all masked pixels lie within the designated “success zone” at the bottom of the image.
+            # WHEN this condition is NOT met, the robot will pivot either left or right by `ALIGN_STEP_DEG` to improve alignment.
+            if abs(angle) > ERROR_THRESHOLD_DEG:    
                 if angle > 0:
-                    print(f"ALIGN: RIGHT by ~{min(ALIGN_STEP_DEG, abs(angle)):.1f}° (error={angle:.2f}°)")
                     pivot(Motion.PIVOT_RIGHT, min(ALIGN_STEP_DEG, abs(angle)), cfg, left_motor_pwm, right_motor_pwm, ser)
                 else:
-                    print(f"ALIGN: LEFT by ~{min(ALIGN_STEP_DEG, abs(angle)):.1f}° (error={angle:.2f}°)")
                     pivot(Motion.PIVOT_LEFT,  min(ALIGN_STEP_DEG, abs(angle)), cfg, left_motor_pwm, right_motor_pwm, ser)
                 time.sleep(0.02)
-                continue  # re-check vision next loop
+                continue  
 
-            # --- APPROACH: aligned; move forward in small chunks until success ---
+            # Necessary Condition 2: Proximity: Almost all masked pixels lie within the designated “success zone” at the bottom of 
+            # the image.
+            # Reason: Confirms the block is close enough to the robot’s gripper for a successful grasp. 
             if not in_zone:
-                if steps_taken >= MAX_APPROACH_STEPS:
-                    print("Safety: reached max approach steps. Stopping.")
+                if steps_taken >= MAX_APPROACH_STEPS: # Safety stop
                     break
-                print(f"APPROACH: forward {APPROACH_STEP_CM:.1f} cm (aligned within {ERROR_THRESHOLD_DEG}°)")
                 drive_line_imu(Motion.FORWARD, APPROACH_STEP_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
                 steps_taken += 1
                 time.sleep(0.02)
-                continue  # re-check vision
-
-            # --- SUCCESS: aligned and in zone → grasp ---
-            print("IN POSITION: closing gripper.")
-            close_gripper(gripper_pwm, cfg)
-
-            # Back out slightly, settle, then drop
-            if BACKUP_AFTER_GRASP_CM > 0:
-                print(f"Backing out {BACKUP_AFTER_GRASP_CM:.1f} cm...")
-                drive_line_imu(Motion.REVERSE, BACKUP_AFTER_GRASP_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
-
-            print(f"Settling for {DROP_SETTLE_S:.2f}s...")
-            time.sleep(DROP_SETTLE_S)
-
-            print("Opening gripper to drop.")
+                continue  
+            
+            # When all grasp requirements are met, then grasp, back up, then drop. 
+            close_gripper(gripper_pwm, cfg)        
+            drive_line_imu(Motion.REVERSE, BACKUP_AFTER_GRASP_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
             open_gripper(gripper_pwm, cfg)
-
-            # Optional: ease forward a touch so the gripper clears the object
-            #if POST_DROP_FORWARD_CM > 0:
-            #    print(f"Clearing forward {POST_DROP_FORWARD_CM:.1f} cm...")
-            #    drive_line_imu(Motion.FORWARD, POST_DROP_FORWARD_CM, cfg, left_motor_pwm, right_motor_pwm, ser)
-
-            print("Task complete.")
+            
             time.sleep(1.0)
             break
 
     except KeyboardInterrupt:
-        print("\nStopping loop.")
+        pass 
     finally:
         print("Cleaning up...")
         try:
             picam.stop()
         except Exception:
             pass
-        left_motor_pwm.stop(); right_motor_pwm.stop()
+        left_motor_pwm.stop()
+        right_motor_pwm.stop()
         gripper_pwm.stop()
         GPIO.cleanup()
 

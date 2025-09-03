@@ -105,7 +105,7 @@ def main():
 
                 # 11. Pivot Angle Estimation: Apply calibration ratio to determine pivot
                 center_x = x + w / 2.0
-                angle = BASE_CAL_RATIO * (center_x - W / 2.0)
+                angle = CAL_RATIO * (center_x - W / 2.0)
                 direction = "RIGHT" if angle >= 0 else "LEFT"
                 angle_text = f"{direction} {abs(angle):.2f} DEGREES"
 
