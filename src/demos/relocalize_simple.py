@@ -129,6 +129,7 @@ if __name__ == "__main__":
 
         # 3. Minima Extraction
         minima = extract_minima(plateaus, smoothed_distances, smoothed_headings)
+        print("Minima:", minima)
         
         plt.figure(figsize=(10, 6))
         # Plot original data with some transparency
