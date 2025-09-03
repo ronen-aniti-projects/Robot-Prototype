@@ -4,20 +4,8 @@
 
 My aim is to design and build, from component parts and software modules, a robot capable of autonomous transport--over the unfinished concrete planer inclined surface of a residential swimming pool--of 3D-printed blocks from scattered locations to a designated 2 ft. by 2 ft. drop-off zone, all without colliding with the walls of the swimming pool or undelivered blocks. My motivation for this project is (i) in familiarizing myself with the process of integrating sensors, actuators, and computing boards, (ii) putting into practice some robotics concepts, including navigation, localization, object detection, and drive control, and (iii) establishing a "platform project" that can serve as a physical testing ground as I advance with my University of Maryland (College Park) M.Eng. Robotics Engineering studies, much of which is simulation-based only. 
 
-
 ## The Results to Date
-
-### The Results
-* Integrated mechanical subsystem
-* Integrated a vision subsystem
-* Integrated a drive motor subsystem
-* Integrated a gripper subsystem
-* Integrated a visiual-motor subsystem
-* Laid groundwork for a navigation subsystem
-
-### The Current Work
-* Identified insufficient torque for reliable driving. Exploring replacing AA rechargable battery pack with a LiPo battery pack. 
-* Realized the limits of dead-reckoning only based navigation. Laying groundwork for ultrasonic distance based relocalization routine to correct for error accumulation. 
+I have integrated the mechanical, vision, drive, and gripper subsystems into a working Raspberry Pi robot that detects, aligns with, and grasps 3D-printed blocks. I've demonstrated driving in a square, approaching and grasping blocks, and sonar-based relocalization at the drop-off. I'm currently troubleshooting torque-limited stalls and planning to replace the 6 V AA pack with a 7.4 V 2S LiPo, then re-tune the drive control. 
 
 ## The Mechanical Sub-System
 The robot's body comprises a commercial-off-the-shelf chassis (DFRobot 4WD Baron Mobile Robot Platform), four commercial-off-the-shelf silicone tread orange and clear motor wheels (Adafruit), a commercial-off-the-shelf servo-gripper assembly (ServoCity Servo-Driven Parallel Gripper Kit), a shelf-based mounting assembly I designed and manufactured, and a perception mounting part I designed and manufactured--these latter two I designed in Dassault Systèmes computer aided design (CAD) program 2024 Solidworks, I prepared for 3-D printing in computer aided manufacturing (CAM) program Prusa Slicer, and I manufactured on Prusa MK3 and Prusa MK4 fusion deposition modeling (FDM) 3-D printers at University of Maryland's Rapid Prototyping Center. I fastened all of the mechanical components with 2 mm and 3 mm machine screws and associated nut, washer, and standoff fastener hardware. The primary challenge with implementing a mechanical subsystem for this robot was in striking a balance between leveraging commercial-off-the-shelf components, which are accessible but come only in a single form, and between leveraging custom-made components, which can be highly tailored to the application at the expense of requiring development time to produce.
