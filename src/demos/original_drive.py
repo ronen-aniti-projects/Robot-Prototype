@@ -63,8 +63,8 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
     base_heading   = read_heading(ser)
 
     # Set the P-controller parameters 
-    base_duty   = 75
-    kp          = 10
+    base_duty   = 50
+    kp          = 1
     
     # Read the IMU to record the start heading
     start_heading = read_heading(ser)
@@ -79,8 +79,8 @@ def pivot(mode, pivot_angle_deg, cfg, left_motor_pwm, right_motor_pwm, ser):
 
     while abs(error) > 2:
         adjustment = abs(error) * kp
-        left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-        right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
+        left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
+        right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
         error = wrap_angle(target_heading - read_heading(ser))
         time.sleep(0.001)
 
@@ -111,8 +111,8 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
     base_heading   = read_heading(ser)
 
     # Set the P-controller parameters 
-    base_duty   = 100
-    kp          = 10
+    base_duty   = 50
+    kp          = 1
     
     # Track the encoder error and the heading error
     error         = 0           # left_ticks - right ticks
@@ -149,11 +149,11 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
             adjustment = kp * abs(heading_error)
             
             if mode is Motion.FORWARD:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 90))
+                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
             if mode is Motion.REVERSE:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
+                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 90))
         
         # If the target heading is to the right of the current heading, the robot should pivot left.
         elif heading_error > 0:
@@ -161,16 +161,16 @@ def drive_line_imu(mode, target_distance_cm, cfg, left_motor_pwm, right_motor_pw
             adjustment = kp * abs(heading_error)
 
             if mode is Motion.FORWARD:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
+                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 90))
             if mode is Motion.REVERSE:
-                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 100))
-                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 100))
+                left_motor_pwm.ChangeDutyCycle(np.clip(base_duty - adjustment, 0, 90))
+                right_motor_pwm.ChangeDutyCycle(np.clip(base_duty + adjustment, 0, 90))
 
         # If the target heading is the same as the current heading, the robot should not pivot at all.
         else:
-            left_motor_pwm.ChangeDutyCycle(np.clip(base_duty, 0, 100))
-            right_motor_pwm.ChangeDutyCycle(np.clip(base_duty, 0, 100))
+            left_motor_pwm.ChangeDutyCycle(np.clip(base_duty, 0, 90))
+            right_motor_pwm.ChangeDutyCycle(np.clip(base_duty, 0, 90))
 
         # Set a 1 KHz speed limit on the control loop
         time.sleep(0.001)
@@ -225,7 +225,7 @@ if __name__ == "__main__":
         while True: 
             drive_line_imu(Motion.FORWARD, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)
             time.sleep(2)
-            pivot(Motion.PIVOT_RIGHT, 90, cfg, left_motor_pwm, right_motor_pwm, ser)
+            pivot(Motion.PIVOT_RIGHT, 10, cfg, left_motor_pwm, right_motor_pwm, ser)
             time.sleep(2)
             #pivot(Motion.PIVOT_RIGHT, 45, cfg, left_motor_pwm, right_motor_pwm, ser)
             #time.sleep(2)           
