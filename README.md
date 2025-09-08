@@ -72,7 +72,13 @@ The following video is a demonstration of the robot executing the relocalization
 The following figure illustrates the sonar trace, with walls showing up as plateaus. 
 ![Sonar Trace](docs/gallery/Sonar_Trace.png)
 
-## Sept. 2: Troubleshooting Unreliable Driving
+## Follow Up: Sept. 2, 2025: Troubleshooting Unreliable Driving
 This project is a work in progress. I’m currently troubleshooting unreliable pivot maneuvers. Wheel slippage improved after switching from plastic to silicone tires, but not completely. I plan to try solving this by coating the tires with hot glue–in a tread-like pattern. A second issue is insufficient motor torque. The added weight from the 3D-printed mounts and casing, combined with powering four motors from a 6 V AA battery pack through a single L298N motor driver (which drops ~ 2 V internally), leaves too little voltage–and therefore current–at the motor terminals. As a result, the robot frequently stalls during pivots, especially on inclines, even at full PWM. To address this, I plan to replace my 6 V AA battery pack with a 7.4 V 5000 mAh 50 C high discharge LiPo battery. 
 
 ![Next Steps](docs/gallery/Next_Steps.JPG)
+
+## Follow Up: Sept 8. Installation of the LiPo Battery
+I have installed the 7.4 V 5000 mAh 50 C high discharge LiPo battery. I've included a picture showing the main wiring. I have wired the battery to the L298N supply voltage terminals. I use a 7.5 A inline fuse. Also, because the 12 AWG battery wires are too thick for the motor driver, I use 16 AWG wire, which I connect to the larger gauge wire with a lap-joint solder connection.  
+
+![LiPo Wiring](docs/gallery/LiPo_Wiring.png)
+

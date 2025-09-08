@@ -22,12 +22,13 @@ if __name__ == "__main__":
     
     try:
         while True:
-            for dc in range(0, 101, 5):
-                left_motor_pwm.ChangeDutyCycle(dc)
-                time.sleep(0.4)
-            for dc in range(100, -1, -5):
-                left_motor_pwm.ChangeDutyCycle(dc)
-                time.sleep(0.4)
+            for dc in range(60, 91, 5):
+               left_motor_pwm.ChangeDutyCycle(dc)
+               time.sleep(1)
+            for dc in range(90, -1, -5):
+               left_motor_pwm.ChangeDutyCycle(dc)
+               time.sleep(0.2)
+            
     except KeyboardInterrupt:
         pass
     left_motor_pwm.stop()
