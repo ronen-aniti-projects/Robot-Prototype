@@ -77,7 +77,7 @@ This project is a work in progress. I’m currently troubleshooting unreliable p
 
 ![Next Steps](docs/gallery/Next_Steps.JPG)
 
-## Follow Up: Sept 8. Installation of the LiPo Battery
+## Follow Up: Sept 8, 2025: Installation of the LiPo Battery
 I have installed the 7.4 V 5000 mAh 50 C high discharge LiPo battery. I've included a picture showing the main wiring. I have wired the battery to the L298N supply voltage terminals. I use a 7.5 A inline fuse. Also, because the 12 AWG battery wires are too thick for the motor driver, I use 16 AWG wire, which I connect to the larger gauge wire with a lap-joint solder connection. 
 
 While preparing for this installation, I learned that before I begin testing driving performance on the swimming pool floor, I should probably swap my L298N with a motor driver rated for higher currents. The reason for this is that the stall current for each of my motors is probably ~ 2 A, but the maximum supply current, per output channel, as per the L298 STMicroelectronics datasheet is 2 A. I've purchased a BTS7960 (43 A max. supply current) to replace my L298N, and will proceed with the installation upon its arrival in the mail. 
@@ -86,3 +86,9 @@ I've conducted bench no-load motor testing (robot suspended above ground) with t
 
 ![LiPo Wiring](docs/gallery/LiPo_Wiring.png)
 
+## Follow Up: Sept. 17, 2025: Modifications to the Motor Control Circuit
+
+I have decided to upgrade the entire motor control circuit, not just the battery. The buck converter serves the purpose of stepping down the battery voltage from 7.4 V to 6 V for the TT gear motors. The new motor driver, the DBH-12 is rated for a much higher output current per channel vs. the L298N, 20 A vs 2 A, so stall-induced overheating will be a nonissue. Because of the LiPo’s high discharge rate and low internal resistance, I have added an inline 7.5 A blade fuse to protect against short circuits, though I may decide to replace this with a 10 A fuse to prevent tripping during motor stalls. 
+
+![New Motor Control Components](docs/gallery/New_Motor_Circuit_Components.JPG)
+![Motor Control Circuit Upgrade](docs/gallery/Motor_Control_Upgrade_1.png)
