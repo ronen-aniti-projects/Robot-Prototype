@@ -227,6 +227,8 @@ if __name__ == "__main__":
             time.sleep(2)
             pivot(Motion.PIVOT_RIGHT, 10, cfg, left_motor_pwm, right_motor_pwm, ser)
             time.sleep(2)
+            pivot(Motion.PIVOT_LEFT, 10, cfg, left_motor_pwm, right_motor_pwm, ser)
+            time.sleep(2)
             #pivot(Motion.PIVOT_RIGHT, 45, cfg, left_motor_pwm, right_motor_pwm, ser)
             #time.sleep(2)           
             #drive_line_imu(Motion.REVERSE, target_distance_cm, cfg, left_motor_pwm, right_motor_pwm, ser)

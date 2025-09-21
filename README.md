@@ -92,3 +92,9 @@ I have decided to upgrade the entire motor control circuit, not just the battery
 
 ![New Motor Control Components](docs/gallery/New_Motor_Circuit_Components.JPG)
 ![Motor Control Circuit Upgrade](docs/gallery/Motor_Control_Upgrade_1.png)
+
+## Follow Up: Sept. 17, 2025: Integrating the New Motor Control Hardware 
+
+Today was a fun day. I successfully installed the DBH-12 motor driver and 300 W buck converter. The following is video from bench testing. I managed to blow the LiPo inline fuse twice upon accidentally touching a screwdriver between the buck’s voltage output screw terminal and its grounded heatsink. It’s a good thing I have more blade fuses on hand. The motors seem significantly more powerful than they were with the old motor driver. I’m measuring a ~0.5 V sag on no-load motor drive at 100% duty cycle. When I press down my fingers to induce a stall, that sag grows to ~1 V total. I’m beginning to think about reasons why this might be happening and how to minimize this sag. When my replacement DMM fuses arrive in the mail–I previously blew my 10 A DMM fuse–I’ll use my DMM to measure the current across the buck’s output terminals to check if my constant current buck setting is a contributing factor. 
+
+[![Bench Test New Motor Hardware](docs/gallery/New_Motor_HW_Test.png)](https://youtu.be/4IkJXeA65EI)
